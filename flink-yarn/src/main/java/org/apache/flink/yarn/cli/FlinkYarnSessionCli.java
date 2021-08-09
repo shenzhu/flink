@@ -406,12 +406,15 @@ public class FlinkYarnSessionCli extends AbstractYarnCli {
             effectiveConfiguration.setString(HA_CLUSTER_ID, zooKeeperNamespace);
             effectiveConfiguration.setString(
                     YarnConfigOptions.APPLICATION_ID, ConverterUtils.toString(applicationId));
+            // 设置execution.target
+            // 目标执行器决定后面什么类型的执行器提交任务: yarn-session, yarn-per-job
             effectiveConfiguration.setString(
                     DeploymentOptions.TARGET, YarnSessionClusterExecutor.NAME);
         } else {
             effectiveConfiguration.setString(DeploymentOptions.TARGET, YarnJobClusterExecutor.NAME);
         }
 
+        // 设置JobManager的内存
         if (commandLine.hasOption(jmMemory.getOpt())) {
             String jmMemoryVal = commandLine.getOptionValue(jmMemory.getOpt());
             if (!MemorySize.MemoryUnit.hasUnit(jmMemoryVal)) {
@@ -421,6 +424,7 @@ public class FlinkYarnSessionCli extends AbstractYarnCli {
                     JobManagerOptions.TOTAL_PROCESS_MEMORY, MemorySize.parse(jmMemoryVal));
         }
 
+        // 设置TaskManager的内存
         if (commandLine.hasOption(tmMemory.getOpt())) {
             String tmMemoryVal = commandLine.getOptionValue(tmMemory.getOpt());
             if (!MemorySize.MemoryUnit.hasUnit(tmMemoryVal)) {
@@ -430,6 +434,7 @@ public class FlinkYarnSessionCli extends AbstractYarnCli {
                     TaskManagerOptions.TOTAL_PROCESS_MEMORY, MemorySize.parse(tmMemoryVal));
         }
 
+        // 设置slot数量
         if (commandLine.hasOption(slots.getOpt())) {
             effectiveConfiguration.setInteger(
                     TaskManagerOptions.NUM_TASK_SLOTS,

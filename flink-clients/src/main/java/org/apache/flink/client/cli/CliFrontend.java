@@ -221,6 +221,7 @@ public class CliFrontend {
     protected void run(String[] args) throws Exception {
         LOG.info("Running 'run' command.");
 
+        // 第一部分：解析运行参数
         final Options commandOptions = CliFrontendParser.getRunCommandOptions();
         final CommandLine commandLine = getCommandLine(commandOptions, args, true);
 
@@ -233,16 +234,19 @@ public class CliFrontend {
         final CustomCommandLine activeCommandLine =
                 validateAndGetActiveCommandLine(checkNotNull(commandLine));
 
+        // 第二部分：将用户提交的jar包封装为PackagedProgram并且执行
         final ProgramOptions programOptions = ProgramOptions.create(commandLine);
 
         final List<URL> jobJars = getJobJarAndDependencies(programOptions);
 
+        // 获取有效配置
         final Configuration effectiveConfiguration =
                 getEffectiveConfiguration(activeCommandLine, commandLine, programOptions, jobJars);
 
         LOG.debug("Effective executor configuration: {}", effectiveConfiguration);
 
         try (PackagedProgram program = getPackagedProgram(programOptions, effectiveConfiguration)) {
+            // 重点：执行用户的程序
             executeProgram(effectiveConfiguration, program);
         }
     }
@@ -1111,24 +1115,32 @@ public class CliFrontend {
 
     /** Submits the job based on the arguments. */
     public static void main(final String[] args) {
+        // 日志打印环境配置信息
         EnvironmentInformation.logEnvironmentInfo(LOG, "Command Line Client", args);
 
         // 1. find the configuration directory
+        // 读取Flink的配置文件目录
         final String configurationDirectory = getConfigurationDirectoryFromEnv();
 
         // 2. load the global configuration
+        // 读取Flink配置文件到configuration对象
         final Configuration configuration =
                 GlobalConfiguration.loadConfiguration(configurationDirectory);
 
         // 3. load the custom command lines
+        // 加载自定义命令行
         final List<CustomCommandLine> customCommandLines =
                 loadCustomCommandLines(configuration, configurationDirectory);
 
         int retCode = 31;
         try {
+            // 实例化CliFrontend对象
             final CliFrontend cli = new CliFrontend(configuration, customCommandLines);
 
+            // 加载认证配置
             SecurityUtils.install(new SecurityConfiguration(cli.configuration));
+
+            // 在默认环境下调用启动参数
             retCode = SecurityUtils.getInstalledContext().runSecured(() -> cli.parseAndRun(args));
         } catch (Throwable t) {
             final Throwable strippedThrowable =
@@ -1145,8 +1157,10 @@ public class CliFrontend {
     // --------------------------------------------------------------------------------------------
 
     public static String getConfigurationDirectoryFromEnv() {
+        // 从FLINK_CONF_DIR环境变量获取配置文件路径
         String location = System.getenv(ConfigConstants.ENV_FLINK_CONF_DIR);
 
+        // 如果配置了该变量
         if (location != null) {
             if (new File(location).exists()) {
                 return location;
@@ -1159,10 +1173,13 @@ public class CliFrontend {
                                 + "' environment variable, does not exist.");
             }
         } else if (new File(CONFIG_DIRECTORY_FALLBACK_1).exists()) {
+            // 如果没有配置环境变量，从../conf寻找
             location = CONFIG_DIRECTORY_FALLBACK_1;
         } else if (new File(CONFIG_DIRECTORY_FALLBACK_2).exists()) {
+            // 如果没有找到，从当前目录的conf寻找
             location = CONFIG_DIRECTORY_FALLBACK_2;
         } else {
+            // 如果都没有找到，那么报错并且退出
             throw new RuntimeException(
                     "The configuration directory was not specified. "
                             + "Please specify the directory containing the configuration file through the '"
@@ -1192,6 +1209,7 @@ public class CliFrontend {
 
         //	Command line interface of the YARN session, with a special initialization here
         //	to prefix all options with y/yarn.
+        //  首先尝试加载Yarn的Cli
         final String flinkYarnSessionCLI = "org.apache.flink.yarn.cli.FlinkYarnSessionCli";
         try {
             customCommandLines.add(

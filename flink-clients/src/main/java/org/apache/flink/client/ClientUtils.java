@@ -90,12 +90,14 @@ public enum ClientUtils {
         final ClassLoader userCodeClassLoader = program.getUserCodeClassLoader();
         final ClassLoader contextClassLoader = Thread.currentThread().getContextClassLoader();
         try {
+            // 设置当前的ClassLoader为用户代码的ClassLoader
             Thread.currentThread().setContextClassLoader(userCodeClassLoader);
 
             LOG.info(
                     "Starting program (detached: {})",
                     !configuration.getBoolean(DeploymentOptions.ATTACHED));
 
+            // 用户代码中的getExecutionEnvironment会返回这个Environment
             ContextEnvironment.setAsContext(
                     executorServiceLoader,
                     configuration,
@@ -111,6 +113,7 @@ public enum ClientUtils {
                     suppressSysout);
 
             try {
+                // 调用用户代码的main方法
                 program.invokeInteractiveModeForExecution();
             } finally {
                 ContextEnvironment.unsetAsContext();

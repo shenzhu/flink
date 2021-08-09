@@ -475,7 +475,7 @@ public class YarnClusterDescriptor implements ClusterDescriptor<ApplicationId> {
             return deployInternal(
                     clusterSpecification,
                     "Flink per-job cluster",
-                    getYarnJobClusterEntrypoint(),
+                    getYarnJobClusterEntrypoint(), // 获取YarnJobClusterEntrypoint
                     jobGraph,
                     detached);
         } catch (Exception e) {
@@ -555,6 +555,7 @@ public class YarnClusterDescriptor implements ClusterDescriptor<ApplicationId> {
         // --------------
 
         // Create application via yarnClient
+        // 创建应用
         final YarnClientApplication yarnApplication = yarnClient.createApplication();
         final GetNewApplicationResponse appResponse = yarnApplication.getNewApplicationResponse();
 
@@ -781,6 +782,7 @@ public class YarnClusterDescriptor implements ClusterDescriptor<ApplicationId> {
         org.apache.flink.core.fs.FileSystem.initialize(
                 configuration, PluginUtils.createPluginManagerFromRootFolder(configuration));
 
+        // 初始化文件系统HDFS
         final FileSystem fs = FileSystem.get(yarnConfiguration);
 
         // hard coded check for the GoogleHDFS client because its not overriding the getScheme()
@@ -800,6 +802,7 @@ public class YarnClusterDescriptor implements ClusterDescriptor<ApplicationId> {
         final List<Path> providedLibDirs =
                 Utils.getQualifiedRemoteSharedPaths(configuration, yarnConfiguration);
 
+        // 上传文件的工具类
         final YarnApplicationFileUploader fileUploader =
                 YarnApplicationFileUploader.from(
                         fs,
@@ -881,6 +884,7 @@ public class YarnClusterDescriptor implements ClusterDescriptor<ApplicationId> {
         // Register all files in provided lib dirs as local resources with public visibility
         // and upload the remaining dependencies as local resources with APPLICATION visibility.
         final List<String> systemClassPaths = fileUploader.registerProvidedLocalResources();
+        // 上传systemShipFiles: 日志的配置文件，lib/目录下除了dist的jar包
         final List<String> uploadedDependencies =
                 fileUploader.registerMultipleLocalResources(
                         systemShipFiles.stream()
@@ -892,6 +896,7 @@ public class YarnClusterDescriptor implements ClusterDescriptor<ApplicationId> {
 
         // upload and register ship-only files
         // Plugin files only need to be shipped and should not be added to classpath.
+        // 上传shipOnlyFiles: plugins/目录下的文件
         if (providedLibDirs == null || providedLibDirs.isEmpty()) {
             Set<File> shipOnlyFiles = new HashSet<>();
             addPluginsFoldersToShipFiles(shipOnlyFiles);
@@ -911,6 +916,7 @@ public class YarnClusterDescriptor implements ClusterDescriptor<ApplicationId> {
         }
 
         // Upload and register user jars
+        // 上传userJarFiles: 用户代码的jar包
         final List<String> userClassPaths =
                 fileUploader.registerMultipleLocalResources(
                         userJarFiles,
@@ -939,6 +945,7 @@ public class YarnClusterDescriptor implements ClusterDescriptor<ApplicationId> {
         }
 
         // Setup jar for ApplicationMaster
+        // 上传和配置ApplicationMaster的jar包: flink-dist*.jar
         final YarnLocalResourceDescriptor localResourceDescFlinkJar =
                 fileUploader.uploadFlinkDist(flinkJarPath);
         classPathBuilder
@@ -959,6 +966,7 @@ public class YarnClusterDescriptor implements ClusterDescriptor<ApplicationId> {
                 final String jobGraphFilename = "job.graph";
                 configuration.setString(JOB_GRAPH_FILE_PATH, jobGraphFilename);
 
+                // 将JobGraph写入tmp文件，添加到本地资源并上传到HDFS
                 fileUploader.registerSingleLocalResource(
                         jobGraphFilename,
                         new Path(tmpJobGraphFile.toURI()),
@@ -984,6 +992,7 @@ public class YarnClusterDescriptor implements ClusterDescriptor<ApplicationId> {
             tmpConfigurationFile = File.createTempFile(appId + "-flink-conf.yaml", null);
             BootstrapTools.writeConfiguration(configuration, tmpConfigurationFile);
 
+            // 上传flink配置文件
             String flinkConfigKey = "flink-conf.yaml";
             fileUploader.registerSingleLocalResource(
                     flinkConfigKey,
@@ -1088,6 +1097,7 @@ public class YarnClusterDescriptor implements ClusterDescriptor<ApplicationId> {
         final JobManagerProcessSpec processSpec =
                 JobManagerProcessUtils.processSpecFromConfigWithNewOptionToInterpretLegacyHeap(
                         flinkConfiguration, JobManagerOptions.TOTAL_PROCESS_MEMORY);
+        // 封装启动AM container的Java命令
         final ContainerLaunchContext amContainer =
                 setupApplicationMasterContainer(yarnClusterEntrypoint, hasKrb5, processSpec);
 

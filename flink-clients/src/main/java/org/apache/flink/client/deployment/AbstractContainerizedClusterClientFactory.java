@@ -39,12 +39,14 @@ public abstract class AbstractContainerizedClusterClientFactory<ClusterID>
     public ClusterSpecification getClusterSpecification(Configuration configuration) {
         checkNotNull(configuration);
 
+        // 获取JobManager的内存大小
         final int jobManagerMemoryMB =
                 JobManagerProcessUtils.processSpecFromConfigWithNewOptionToInterpretLegacyHeap(
                                 configuration, JobManagerOptions.TOTAL_PROCESS_MEMORY)
                         .getTotalProcessMemorySize()
                         .getMebiBytes();
 
+        // 获取TaskManager的内存大小
         final int taskManagerMemoryMB =
                 TaskExecutorProcessUtils.processSpecFromConfig(
                                 TaskExecutorProcessUtils
@@ -54,6 +56,7 @@ public abstract class AbstractContainerizedClusterClientFactory<ClusterID>
                         .getTotalProcessMemorySize()
                         .getMebiBytes();
 
+        // 计算每个TaskManager的slot数量
         int slotsPerTaskManager = configuration.getInteger(TaskManagerOptions.NUM_TASK_SLOTS);
 
         return new ClusterSpecification.ClusterSpecificationBuilder()

@@ -98,6 +98,7 @@ public class DefaultJobMasterServiceFactory implements JobMasterServiceFactory {
     private JobMasterService internalCreateJobMasterService(
             UUID leaderSessionId, OnCompletionActions onCompletionActions) throws Exception {
 
+        // 创建JobMaster
         final JobMaster jobMaster =
                 new JobMaster(
                         rpcService,
@@ -121,6 +122,7 @@ public class DefaultJobMasterServiceFactory implements JobMasterServiceFactory {
                         DefaultExecutionDeploymentReconciler::new,
                         initializationTimestamp);
 
+        // 调用JobMaster的onStart方法
         jobMaster.start();
 
         return jobMaster;

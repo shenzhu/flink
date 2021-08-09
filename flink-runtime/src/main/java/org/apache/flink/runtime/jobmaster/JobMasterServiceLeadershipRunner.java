@@ -259,6 +259,7 @@ public class JobMasterServiceLeadershipRunner implements JobManagerRunner, Leade
                                         leaderSessionId,
                                         ThrowingRunnable.unchecked(
                                                 () ->
+                                                        // 校验作业的调度转改然后启动作业管理器
                                                         verifyJobSchedulingStatusAndCreateJobMasterServiceProcess(
                                                                 leaderSessionId)),
                                         "verify job scheduling status and create JobMasterServiceProcess"));

@@ -37,6 +37,7 @@ final class DispatcherRunnerLeaderElectionLifecycleManager<
         this.dispatcherRunner = dispatcherRunner;
         this.leaderElectionService = leaderElectionService;
 
+        // 启动dispatcher的leader选举
         leaderElectionService.start(dispatcherRunner);
     }
 
