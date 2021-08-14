@@ -81,7 +81,7 @@ import static org.apache.flink.util.Preconditions.checkNotNull;
  * @param <T> Type of the {@link RpcEndpoint}
  */
 class AkkaRpcActor<T extends RpcEndpoint & RpcGateway> extends AbstractActor {
-
+    /** AkkaRpcActor负责接收RPC调用的请求，并通过反射调用个RpcEndpoint的对应方法来完成RPC调用. */
     protected final Logger log = LoggerFactory.getLogger(getClass());
 
     /** the endpoint to invoke the methods on. */
@@ -148,6 +148,7 @@ class AkkaRpcActor<T extends RpcEndpoint & RpcGateway> extends AbstractActor {
 
     @Override
     public Receive createReceive() {
+        // 不同类型消息的处理方法
         return ReceiveBuilder.create()
                 .match(RemoteHandshakeMessage.class, this::handleHandshakeMessage)
                 .match(ControlMessages.class, this::handleControlMessage)
@@ -156,6 +157,7 @@ class AkkaRpcActor<T extends RpcEndpoint & RpcGateway> extends AbstractActor {
     }
 
     private void handleMessage(final Object message) {
+        // 处理RPC调用
         if (state.isRunning()) {
             mainThreadValidator.enterMainThread();
 
@@ -275,6 +277,7 @@ class AkkaRpcActor<T extends RpcEndpoint & RpcGateway> extends AbstractActor {
             String methodName = rpcInvocation.getMethodName();
             Class<?>[] parameterTypes = rpcInvocation.getParameterTypes();
 
+            // 获取需要调用的方法
             rpcMethod = lookupRpcMethod(methodName, parameterTypes);
         } catch (ClassNotFoundException e) {
             log.error("Could not load method arguments.", e);
@@ -296,6 +299,7 @@ class AkkaRpcActor<T extends RpcEndpoint & RpcGateway> extends AbstractActor {
             getSender().tell(new Status.Failure(rpcException), getSelf());
         }
 
+        // 通过反射执行
         if (rpcMethod != null) {
             try {
                 // this supports declaration of anonymous classes
@@ -327,6 +331,7 @@ class AkkaRpcActor<T extends RpcEndpoint & RpcGateway> extends AbstractActor {
 
                     final String methodName = rpcMethod.getName();
 
+                    // 向调用方发送执行结果
                     if (result instanceof CompletableFuture) {
                         final CompletableFuture<?> responseFuture = (CompletableFuture<?>) result;
                         sendAsyncResponse(responseFuture, methodName);

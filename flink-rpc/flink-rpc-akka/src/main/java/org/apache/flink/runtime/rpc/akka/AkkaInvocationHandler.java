@@ -116,6 +116,9 @@ class AkkaInvocationHandler implements InvocationHandler, AkkaBasedEndpoint, Rpc
 
     @Override
     public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
+        // 在获取了本地或者远端RpcEndpoint的代理对象之后，就可以通过代理对象发起RPC调用了
+        // 由于代理对象是通过动态代理创建的，因而所有的方法都会转化为AkkaInvocationHandler#invoke方法
+        // 并传入RPC调用的方法以及参数信息
         Class<?> declaringClass = method.getDeclaringClass();
 
         Object result;
@@ -185,6 +188,8 @@ class AkkaInvocationHandler implements InvocationHandler, AkkaBasedEndpoint, Rpc
 
     @Override
     public void start() {
+        // 向Akka actor发送START消息
+        // 启动RpcEndpoint实际上就是向当前endpoint绑定的Actor发送一条START消息，通知服务启动
         rpcEndpoint.tell(ControlMessages.START, ActorRef.noSender());
     }
 
@@ -208,11 +213,17 @@ class AkkaInvocationHandler implements InvocationHandler, AkkaBasedEndpoint, Rpc
      * @throws Exception if the RPC invocation fails
      */
     private Object invokeRpc(Method method, Object[] args) throws Exception {
+        /**
+         * 对于RPC调用，需要将RPC调用的方法名，参数类型和参数值封装为一个RpcInvocation对象
+         * 根据RpcEndpoint是本地的还是远端，具体的有LocalRpcInvocation和RemoteRpcInvocation两类 它们的区别在于是否需要序列化
+         * 之后根据RPC方法是否有返回值，决定调用tell或者ask方法，通过Akka的ActorRef向对应的AkkaRpcActor发送请求 如果带有返回值，则等待actor相应
+         */
         String methodName = method.getName();
         Class<?>[] parameterTypes = method.getParameterTypes();
         Annotation[][] parameterAnnotations = method.getParameterAnnotations();
         Time futureTimeout = extractRpcTimeout(parameterAnnotations, args, timeout);
 
+        // 将RPC调用封装为RpcInvocation(会根据RpcEndpoint决定是本地还是远程)
         final RpcInvocation rpcInvocation =
                 createRpcInvocationMessage(
                         method.getDeclaringClass().getSimpleName(),
@@ -224,6 +235,7 @@ class AkkaInvocationHandler implements InvocationHandler, AkkaBasedEndpoint, Rpc
 
         final Object result;
 
+        // 根据RPC方法是否具有返回值决定调用tell还是ask
         if (Objects.equals(returnType, Void.TYPE)) {
             tell(rpcInvocation);
 

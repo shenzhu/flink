@@ -207,6 +207,8 @@ public class AkkaRpcService implements RpcService {
     @Override
     public <C extends RpcGateway> CompletableFuture<C> connect(
             final String address, final Class<C> clazz) {
+        // 如果需要获取一个远程RpcEndpoint的代理，就需要通过connect方法
+        // 同时要提供远程endpoint的地址
 
         return connectInternal(
                 address,
@@ -251,6 +253,10 @@ public class AkkaRpcService implements RpcService {
 
     @Override
     public <C extends RpcEndpoint & RpcGateway> RpcServer startServer(C rpcEndpoint) {
+        /**
+         * RpcEndpoint的构造函数中会调用此方法来初始化服务 其主要工作包括 (1) 创建一个Akka actor(AkkaRpcActor/FencedAkkaRpcActor)
+         * (2) 通过动态代理创建代理对象
+         */
         checkNotNull(rpcEndpoint, "rpc endpoint");
 
         final SupervisorActor.ActorRegistration actorRegistration =
@@ -273,6 +279,7 @@ public class AkkaRpcService implements RpcService {
             hostname = host.get();
         }
 
+        // 代理的借口
         Set<Class<?>> implementedRpcGateways =
                 new HashSet<>(RpcUtils.extractImplementedRpcGateways(rpcEndpoint.getClass()));
 
@@ -281,6 +288,7 @@ public class AkkaRpcService implements RpcService {
 
         final InvocationHandler akkaInvocationHandler;
 
+        // 创建InvocationHandler
         if (rpcEndpoint instanceof FencedRpcEndpoint) {
             // a FencedRpcEndpoint needs a FencedAkkaInvocationHandler
             akkaInvocationHandler =
@@ -314,6 +322,7 @@ public class AkkaRpcService implements RpcService {
         // code is loaded dynamically (for example from an OSGI bundle) through a custom ClassLoader
         ClassLoader classLoader = getClass().getClassLoader();
 
+        // 通过动态代理创建代理对象
         @SuppressWarnings("unchecked")
         RpcServer server =
                 (RpcServer)

@@ -259,6 +259,7 @@ public abstract class RpcEndpoint implements RpcGateway, AutoCloseableAsync {
      * @return Self gateway of the specified type which can be used to issue asynchronous rpcs
      */
     public <C extends RpcGateway> C getSelfGateway(Class<C> selfGatewayType) {
+        // rpcServer是通过动态代理创建的
         if (selfGatewayType.isInstance(rpcServer)) {
             @SuppressWarnings("unchecked")
             C selfGateway = ((C) rpcServer);
