@@ -55,6 +55,7 @@ public abstract class AbstractUdfStreamOperator<OUT, F extends Function>
     protected final F userFunction;
 
     public AbstractUdfStreamOperator(F userFunction) {
+        // 接受一个用户自定义的处理函数
         this.userFunction = requireNonNull(userFunction);
         checkUdfCheckpointingPreconditions();
     }

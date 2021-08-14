@@ -124,6 +124,10 @@ import static org.apache.flink.util.Preconditions.checkState;
  * HashPartition}. This transformation returns the ID 4. Then we transform the {@code Map-3}. We add
  * the edge {@code 4 -> 3}. The {@code StreamGraph} resolved the actual node with ID 1 and creates
  * and edge {@code 1 -> 3} with the property HashPartition.
+ *
+ * <p>StreamGraphGenerator会基于StreamExecutionEnvironment的trasformations列表来生成StreamGraph
+ * 在遍历Transformation列表生成StreamGraph的时候，会递归调用transform方法，对于每一个Transformation
+ * 确保其上游节点已经完成转换，Transformation被转换为StreamGraph中的节点StreamNode，并为其上下游节点添加边StreamEdge.
  */
 @Internal
 public class StreamGraphGenerator {
@@ -183,6 +187,11 @@ public class StreamGraphGenerator {
             translatorMap;
 
     static {
+        /**
+         * 对于一些不包含物理转换操作的Transformation, 比如Partitioning, Split, Select/Union
+         * 并不会生成StreamNode，而是生成一个带有特定属性的虚拟节点 当添加一条有虚拟节点指向下游节点的边时，会找到虚拟节点上游的物理节点，在两个物理节点之间添加边
+         * 并把虚拟转换操作的属性附着上去
+         */
         @SuppressWarnings("rawtypes")
         Map<Class<? extends Transformation>, TransformationTranslator<?, ? extends Transformation>>
                 tmp = new HashMap<>();
@@ -499,6 +508,7 @@ public class StreamGraphGenerator {
      * delegates to one of the transformation specific methods.
      */
     private Collection<Integer> transform(Transformation<?> transform) {
+        // 由于是递归调用，很可能已经完成了转换
         if (alreadyTransformed.containsKey(transform)) {
             return alreadyTransformed.get(transform);
         }

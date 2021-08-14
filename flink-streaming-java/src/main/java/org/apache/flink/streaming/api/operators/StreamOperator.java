@@ -40,6 +40,9 @@ import java.io.Serializable;
  * the timer service, timer callbacks are also guaranteed not to be called concurrently with methods
  * on {@code StreamOperator}.
  *
+ * <p>在操作DataStream的时候，比如DataStream#map等，会要求我们提供一个自定义的处理函数
+ * 那么这些信息如何保存在Transformation中呢，这里就要引入这个新的借口StreamOperator.
+ *
  * @param <OUT> The output type of the operator
  */
 @PublicEvolving

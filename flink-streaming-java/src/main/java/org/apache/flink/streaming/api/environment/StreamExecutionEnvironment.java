@@ -136,6 +136,11 @@ import static org.apache.flink.util.Preconditions.checkNotNull;
  * or the fault tolerance/checkpointing parameters) and to interact with the outside world (data
  * access).
  *
+ * <p>StreamExecutionEnvironment是Flink在流模式下任务执行的上下文，也是我们编写Flink程序的入口 根据具体的执行环境不同, *
+ * StreamExecutionEnvironment有着不同的具体实现类，如 LocalStreamEnvironment, RemoteStreamEnvironment等 *
+ * StreamExecutionEnvironment也提供了用来配置默认并行度，Checkpointing等机制的方法，这些配置主要都保存在 *
+ * ExecutionConfig和CheckpointConfig中.
+ *
  * @see org.apache.flink.streaming.api.environment.LocalStreamEnvironment
  * @see org.apache.flink.streaming.api.environment.RemoteStreamEnvironment
  */
@@ -169,6 +174,7 @@ public class StreamExecutionEnvironment {
     /** Settings that control the checkpointing behavior. */
     private final CheckpointConfig checkpointCfg = new CheckpointConfig();
 
+    /** 保存生成DataStream的所有转换. */
     protected final List<Transformation<?>> transformations = new ArrayList<>();
 
     private long bufferTimeout = StreamingJobGraphGenerator.UNDEFINED_NETWORK_BUFFER_TIMEOUT;

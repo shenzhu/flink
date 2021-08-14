@@ -21,7 +21,10 @@ import org.apache.flink.annotation.Internal;
 import org.apache.flink.api.common.functions.MapFunction;
 import org.apache.flink.streaming.runtime.streamrecord.StreamRecord;
 
-/** A {@link StreamOperator} for executing {@link MapFunction MapFunctions}. */
+/**
+ * A {@link StreamOperator} for executing {@link MapFunction MapFunctions}.
+ * 具体到诸如map/filter等对应的StreamOperator，基本上都是在AbstractUdfStreamOperator的基础上实现的，比如说这里的StreamMap.
+ */
 @Internal
 public class StreamMap<IN, OUT> extends AbstractUdfStreamOperator<OUT, MapFunction<IN, OUT>>
         implements OneInputStreamOperator<IN, OUT> {

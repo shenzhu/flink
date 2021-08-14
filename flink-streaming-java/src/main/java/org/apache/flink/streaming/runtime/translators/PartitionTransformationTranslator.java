@@ -72,6 +72,7 @@ public class PartitionTransformationTranslator<OUT>
 
         for (Integer inputId : context.getStreamNodeIds(input)) {
             final int virtualId = Transformation.getNewNodeId();
+            // 添加虚拟的Partition节点
             streamGraph.addVirtualPartitionNode(
                     inputId,
                     virtualId,

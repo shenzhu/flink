@@ -508,6 +508,7 @@ public class StreamGraph implements Pipeline {
                         operatorName,
                         vertexClass);
 
+        // 创建StreamNode，这里保存了StreamOperator和vertexClass的信息
         streamNodes.put(vertexID, vertex);
 
         return vertex;
@@ -573,6 +574,7 @@ public class StreamGraph implements Pipeline {
                     "Already has virtual partition node with id " + virtualId);
         }
 
+        // 添加一个虚拟节点，后续添加边的时候会连接到实际的物理节点
         virtualPartitionNodes.put(virtualId, new Tuple3<>(originalId, partitioner, exchangeMode));
     }
 
@@ -610,6 +612,10 @@ public class StreamGraph implements Pipeline {
             OutputTag outputTag,
             StreamExchangeMode exchangeMode) {
 
+        // 先判断是不是虚拟节点伤的边
+        // 如果是则找到虚拟节点上游对应的物理节点
+        // 在两个物理节点之间添加边，并把对应的StreamPartitioner或者OutputTag等补充信息
+        // 添加到StreamEdge中
         if (virtualSideOutputNodes.containsKey(upStreamVertexID)) {
             int virtualId = upStreamVertexID;
             upStreamVertexID = virtualSideOutputNodes.get(virtualId).f0;
@@ -640,6 +646,7 @@ public class StreamGraph implements Pipeline {
                     outputTag,
                     exchangeMode);
         } else {
+            // 两个物理节点
             StreamNode upstreamNode = getStreamNode(upStreamVertexID);
             StreamNode downstreamNode = getStreamNode(downStreamVertexID);
 
@@ -672,6 +679,7 @@ public class StreamGraph implements Pipeline {
                 exchangeMode = StreamExchangeMode.UNDEFINED;
             }
 
+            // 创建StreamEdge，保留了StreamPartitioner等属性
             StreamEdge edge =
                     new StreamEdge(
                             upstreamNode,
@@ -681,6 +689,7 @@ public class StreamGraph implements Pipeline {
                             outputTag,
                             exchangeMode);
 
+            // 分别将StreamEdge添加到上游节点和下游节点
             getStreamNode(edge.getSourceId()).addOutEdge(edge);
             getStreamNode(edge.getTargetId()).addInEdge(edge);
         }
