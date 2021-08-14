@@ -279,7 +279,7 @@ public class AkkaRpcService implements RpcService {
             hostname = host.get();
         }
 
-        // 代理的借口
+        // 代理的接口
         Set<Class<?>> implementedRpcGateways =
                 new HashSet<>(RpcUtils.extractImplementedRpcGateways(rpcEndpoint.getClass()));
 
