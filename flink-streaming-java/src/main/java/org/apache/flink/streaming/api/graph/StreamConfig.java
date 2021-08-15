@@ -63,6 +63,11 @@ import static org.apache.flink.util.Preconditions.checkState;
 /**
  * Internal configuration for a {@link StreamOperator}. This is created and populated by the {@link
  * StreamingJobGraphGenerator}.
+ *
+ * <p>对于每一个StreamOperator，也就是StreamGraph中的每一个StreamNode，在生成JobGraph的过程中
+ * StreamingJobGraphGenerator都会创建一个对应的StreamConfig.
+ *
+ * <p>StreamConfig中保存了这个Operator在运行时需要的所有配置信息，这些信息通过key/value的形式存储在Configuration中.
  */
 @Internal
 public class StreamConfig implements Serializable {

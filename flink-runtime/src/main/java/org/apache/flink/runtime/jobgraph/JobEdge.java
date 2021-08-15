@@ -26,6 +26,12 @@ import static org.apache.flink.util.Preconditions.checkNotNull;
  * This class represent edges (communication channels) in a job graph. The edges always go from an
  * intermediate result partition to a job vertex. An edge is parametrized with its {@link
  * DistributionPattern}.
+ *
+ * <p>在StreamGraph中，StreamNode之间是通过StreamEdge建立连接的，在JobEdge中，对应的是JobEdge
+ *
+ * <p>和StreamEdge中同时保留了源节点和目标节点(sourceId和targetId)不同，在JobEdge中只有源节点的
+ * 信息。由于JobVertex中保存了所有输入的JobEdge信息，因而同样可以在两个节点之间建立连接，更确切的说，JobEdge
+ * 是和节点的输出结果相关联的.
  */
 public class JobEdge implements java.io.Serializable {
 
@@ -35,6 +41,7 @@ public class JobEdge implements java.io.Serializable {
     private final JobVertex target;
 
     /** The distribution pattern that should be used for this job edge. */
+    // 决定了在上游节点的子任务和下游节点之间的连接模式
     private final DistributionPattern distributionPattern;
 
     /** The channel rescaler that should be used for this job edge on downstream side. */

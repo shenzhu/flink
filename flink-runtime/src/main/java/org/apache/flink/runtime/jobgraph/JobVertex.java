@@ -40,7 +40,16 @@ import java.util.List;
 
 import static org.apache.flink.util.Preconditions.checkNotNull;
 
-/** The base class for job vertexes. */
+/** The base class for job vertexes.
+ *
+ * <p>在StreamGraph中，每一个算子(Operator)对应了图中的一个节点(StreamNode)
+ * StreamGraph会被进一步优化，将多个符合条件的节点串联(Chain)在一起形成一个节点
+ * 从而减少数据在不同节点之间流动所产生的序列化，反序列化，网络传输开销
+ * 多个算子被chain在一起形成的节点在JobGraph中对应的就是JobVertex.
+ *
+ * <p>每个JobVertex中包含一个或者多个Operators.
+ *
+ * <p>其输入是JobEdge列表，输出是IntermediateDataSet列表. */
 public class JobVertex implements java.io.Serializable {
 
     private static final long serialVersionUID = 1L;
