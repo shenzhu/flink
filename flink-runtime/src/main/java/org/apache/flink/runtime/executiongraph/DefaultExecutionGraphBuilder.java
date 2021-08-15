@@ -158,6 +158,9 @@ public class DefaultExecutionGraphBuilder {
         final long initMasterStart = System.nanoTime();
         log.info("Running initialization on master for job {} ({}).", jobName, jobId);
 
+        /** JobVertex在Master上进行初始化
+         * 主要关注OutputFormatVertex和InputFormatVertex, 其他类型的vertex在这里没有什么特殊操作.
+         * File output format在这一步准备好输出目录, Input splits在这一步创建对应的splits */
         for (JobVertex vertex : jobGraph.getVertices()) {
             String executableClass = vertex.getInvokableClassName();
             if (executableClass == null || executableClass.isEmpty()) {
@@ -185,6 +188,7 @@ public class DefaultExecutionGraphBuilder {
                 (System.nanoTime() - initMasterStart) / 1_000_000);
 
         // topologically sort the job vertices and attach the graph to the existing one
+        // 对所有的JobVertex进行拓扑排序，并生成ExecutionGraph内部的节点和连接
         List<JobVertex> sortedTopology = jobGraph.getVerticesSortedTopologicallyFromSources();
         if (log.isDebugEnabled()) {
             log.debug(

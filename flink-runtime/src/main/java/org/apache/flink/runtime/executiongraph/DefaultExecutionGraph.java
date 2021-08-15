@@ -779,6 +779,15 @@ public class DefaultExecutionGraph implements ExecutionGraph, InternalExecutionG
                     parallelismStore.getParallelismInfo(jobVertex.getID());
 
             // create the execution job vertex and attach it to the graph
+            /** 创建ExecutionJobVertex
+             * 在创建ExecutionJobVertex的时候会创建对应的ExecutionVertex, IntermediateResult, IntermediateResultPartition等对象
+             * 这里涉及到的对象相对较多，概括起来大致是这样的：
+             *
+             * 每一个JobVertex对应一个ExecutionJobVertex,
+             * 每一个ExecutionJobVertex有parallelism个ExecutionVertex
+             * 每一个JobVertex可能有n(n>=0)个IntermediateDataSet, 在ExecutionJobVertex中, 一个IntermediateDataSet对应一个IntermediateResult, 每一个 IntermediateResult都有parallelism个生产者, 对应parallelism个IntermediateResultPartition
+             * 每一个ExecutionJobVertex都会和前向的IntermediateResult连接，实际上是ExecutionVertex和IntermediateResult建立连接
+             * */
             ExecutionJobVertex ejv =
                     new ExecutionJobVertex(
                             this,
@@ -789,6 +798,7 @@ public class DefaultExecutionGraph implements ExecutionGraph, InternalExecutionG
                             parallelismInfo,
                             initialAttemptCounts.getAttemptCounts(jobVertex.getID()));
 
+            // 连接上游节点
             ejv.connectToPredecessors(this.intermediateResults);
 
             ExecutionJobVertex previousTask = this.tasks.putIfAbsent(jobVertex.getID(), ejv);

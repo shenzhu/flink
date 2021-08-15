@@ -36,10 +36,16 @@ import java.util.stream.Collectors;
 import static org.apache.flink.util.Preconditions.checkArgument;
 import static org.apache.flink.util.Preconditions.checkNotNull;
 
+/**
+ * 在JobGraph中用IntermediateDataSet表示JobVertex的对外输出，一个JobGraph可能有多个输出
+ * 在ExecutionGraph中，于此对应的就是IntermediateResult
+ * */
 public class IntermediateResult {
 
+    // 对应的IntermediateDataSet的ID
     private final IntermediateDataSetID id;
 
+    // 生产者
     private final ExecutionJobVertex producer;
 
     private final IntermediateResultPartition[] partitions;
@@ -72,9 +78,19 @@ public class IntermediateResult {
         this.id = checkNotNull(id);
         this.producer = checkNotNull(producer);
 
+        // 对应ExecutionJobVertex的并行度
         checkArgument(numParallelProducers >= 1);
         this.numParallelProducers = numParallelProducers;
 
+        /**
+         * 由于ExecutionJobVertex有numParallelProducers个并行子任务，自然对应的每一个IntermediateResult就有
+         * numParallelProducers个生产者，每个生产者在相应的IntermediateResult上的输出对应一个IntermediateResultPartition
+         * IntermediateResultPartition表示的是ExecutionVertex的一个输出分区，即
+         * ExecutionJobVertex -> IntermediateResult
+         * ExecutionVertex -> IntermediateResultPartition
+         *
+         * 一个ExecutionJobVertex可能包含多个IntermediateResult
+         * 一个并行的子任务ExecutionVertex可能会会包含多个IntermediateResultPartition */
         this.partitions = new IntermediateResultPartition[numParallelProducers];
 
         // we do not set the intermediate result partitions here, because we let them be initialized

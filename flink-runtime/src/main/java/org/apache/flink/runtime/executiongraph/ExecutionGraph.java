@@ -73,6 +73,16 @@ import java.util.concurrent.CompletableFuture;
  *       messages between the JobManager and the TaskManager about deployment of tasks and updates
  *       in the task status always use the ExecutionAttemptID to address the message receiver.
  * </ul>
+ *
+ * <p>和StreamGraph以及JobGraph不同的是, ExecutionGraph是在JobManager中生成的
+ * Client向JobManager提交JobGraph后, JobManager就会根据JobGraph来创建对应的ExecutionGraph, 并以此来调度任务.
+ *
+ * <p>ExecutionGraph是在创建JobMaster时就构建完成的, 之后就可以被调度执行了, 下面简单概括下调度执行的流程:
+ * 按照拓扑顺序为所有的ExecutionJobVertex分配资源, 每一个ExecutionVertex都需要分配一个slot.
+ * ExecutionVertex的一次执行对应一个Execution, 在分配资源的时候会依照SlotSharingGroup和CoLocationConstraint确定, 分配的时候会考虑slot重用的情况
+ *
+ * <p>在所有的节点资源都获取成功后, 会逐一调用Execution.deploy()来部署Execution, 使用TaskDeploymentDescriptor来描述Execution,
+ * 并提交到分配给该Execution的slot对应的TaskManager, 最终被分配给对应的TaskExecutor执行.
  */
 public interface ExecutionGraph extends AccessExecutionGraph {
 

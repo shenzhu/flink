@@ -57,6 +57,10 @@ import static org.apache.flink.util.Preconditions.checkState;
 /**
  * The ExecutionVertex is a parallel subtask of the execution. It may be executed once, or several
  * times, each of which time it spawns an {@link Execution}.
+ *
+ * <p>ExecutionJobVertex的成员变量中包含一个ExecutionVertex数组。Flink Job可以指定任务的并行度
+ * 在实际运行的时候，会有多个并行的任务同时在执行，对应到这里就是ExecutionVertex
+ * ExecutionVertex是并行任务的一个子任务，算子的并行度是多少，就会有多少个ExecutionVertex
  */
 public class ExecutionVertex
         implements AccessExecutionVertex, Archiveable<ArchivedExecutionVertex> {

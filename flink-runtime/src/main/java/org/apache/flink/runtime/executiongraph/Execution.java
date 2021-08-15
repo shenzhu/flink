@@ -111,6 +111,8 @@ import static org.apache.flink.util.Preconditions.checkState;
  * therefore use atomic state updates and occasional double-checking to ensure that the state after
  * a completed call is as expected, and trigger correcting actions if it is not. Many actions are
  * also idempotent (like canceling).
+ *
+ * <p>Execution是对ExecutionVertex的一次执行，通过ExecutionAttemptId来唯一标识
  */
 public class Execution
         implements AccessExecution, Archiveable<ArchivedExecution>, LogicalSlot.Payload {
