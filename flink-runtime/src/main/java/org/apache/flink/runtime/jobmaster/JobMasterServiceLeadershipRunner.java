@@ -162,6 +162,7 @@ public class JobMasterServiceLeadershipRunner implements JobManagerRunner, Leade
 
     @Override
     public void start() throws Exception {
+        // 启动的JobManagerRunner会竞争leader，一旦被选举为leader，就会启动一个JobMaster
         LOG.debug("Start leadership runner for job {}.", getJobID());
         leaderElectionService.start(this);
     }
@@ -318,6 +319,7 @@ public class JobMasterServiceLeadershipRunner implements JobManagerRunner, Leade
                     e);
         }
 
+        // 启动JobMaster
         jobMasterServiceProcess = jobMasterServiceProcessFactory.create(leaderSessionId);
 
         forwardIfValidLeader(

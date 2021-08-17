@@ -213,6 +213,10 @@ public abstract class ResourceManager<WorkerType extends ResourceIDRetrievable>
 
     @Override
     public final void onStart() throws Exception {
+        /**
+         * 在ResourceManager启动的回调函数中，会通过HighAvailabilityServices获取到选举服务，从而
+         * 参与到选举之中并且懂JobLeaderIdService, 管理当前ResourceManager注册的作业的leader id
+         */
         try {
             log.info("Starting the resource manager.");
             startResourceManagerServices();

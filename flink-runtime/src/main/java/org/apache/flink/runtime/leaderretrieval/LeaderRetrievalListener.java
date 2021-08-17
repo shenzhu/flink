@@ -25,6 +25,10 @@ import java.util.UUID;
 /**
  * Classes which want to be notified about a changing leader by the {@link LeaderRetrievalService}
  * have to implement this interface.
+ *
+ * <p>Flink内部的组件如ResourceManager，JobManager等都可以配置HA模式，Flink集群启动的时候会大量涉及到Leader选举，Leader地址获取等相关操作
+ *
+ * <p>Leader地址的获取通过LeaderRetrievalListener和LeaderRetrievalService这两个接口来完成
  */
 public interface LeaderRetrievalListener {
 

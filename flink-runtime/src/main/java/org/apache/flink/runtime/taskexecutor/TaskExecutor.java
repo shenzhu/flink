@@ -391,6 +391,7 @@ public class TaskExecutor extends RpcEndpoint implements TaskExecutorGateway {
     @Override
     public void onStart() throws Exception {
         try {
+            // 启动服务
             startTaskExecutorServices();
         } catch (Throwable t) {
             final TaskManagerException exception =
@@ -406,6 +407,7 @@ public class TaskExecutor extends RpcEndpoint implements TaskExecutorGateway {
     private void startTaskExecutorServices() throws Exception {
         try {
             // start by connecting to the ResourceManager
+            // 通过LeaderRetriever与ResourceManager链接
             resourceManagerLeaderRetriever.start(new ResourceManagerLeaderListener());
 
             // tell the task slot table who's responsible for the task slot actions
@@ -1344,6 +1346,7 @@ public class TaskExecutor extends RpcEndpoint implements TaskExecutorGateway {
             InstanceID taskExecutorRegistrationId,
             ClusterInformation clusterInformation) {
 
+        // 发送SlotReport
         final CompletableFuture<Acknowledge> slotReportResponseFuture =
                 resourceManagerGateway.sendSlotReport(
                         getResourceID(),
@@ -1375,6 +1378,7 @@ public class TaskExecutor extends RpcEndpoint implements TaskExecutorGateway {
 
         blobCacheService.setBlobServerAddress(blobServerAddress);
 
+        // 连接建立
         establishedResourceManagerConnection =
                 new EstablishedResourceManagerConnection(
                         resourceManagerGateway,
@@ -2184,6 +2188,14 @@ public class TaskExecutor extends RpcEndpoint implements TaskExecutorGateway {
 
         @Override
         public void notifyLeaderAddress(final String leaderAddress, final UUID leaderSessionID) {
+            /**
+             * 获得ResourceManager的地址，与ResourceManager建立连接
+             *
+             * <p>当ResourceManagerLeaderListener的监听被回调的时候，TaskExecutor会试图建立和ResourceManager的连接，
+             * 连接被封装为TaskExecutorToResourceManagerConnection，接下来ResourceManager的leader被确定之后，就可以
+             * 获取到ResourceManager对应的RpcGateway，接下来就可以通过RPC调用发起ResourceManager#registerTaskExecutor注册流程.
+             * 注册成功后，TaskExecutor向ResourceManager报告其资源(主要是slots)情况.
+             */
             runAsync(
                     () ->
                             notifyOfNewResourceManagerLeader(
@@ -2204,6 +2216,7 @@ public class TaskExecutor extends RpcEndpoint implements TaskExecutorGateway {
                 final JobID jobId,
                 final JobMasterGateway jobManagerGateway,
                 final JMTMRegistrationSuccess registrationMessage) {
+            // 和JobManager建立连接
             runAsync(
                     () ->
                             jobTable.getJob(jobId)

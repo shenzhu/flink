@@ -59,6 +59,7 @@ public class RpcGatewayRetriever<F extends Serializable, T extends FencedRpcGate
     @Override
     protected CompletableFuture<T> createGateway(
             CompletableFuture<Tuple2<String, UUID>> leaderFuture) {
+        // 根据Leader的地址通过RpcService.connect()方法获取对应Leader的RpcGateway
         return FutureUtils.retryWithDelay(
                 () ->
                         leaderFuture.thenCompose(

@@ -402,6 +402,8 @@ public abstract class Dispatcher extends PermanentlyFencedRpcEndpoint<Dispatcher
     }
 
     private void persistAndRunJob(JobGraph jobGraph) throws Exception {
+        // 接收到JobGraph请求之后，会将提交的JobGraph保存在SubmittedJobGraphStore中(用于故障恢复)
+        // 并且为提交的JobGraph启动JobManager
         jobGraphWriter.putJobGraph(jobGraph);
         runJob(jobGraph, ExecutionType.SUBMISSION);
     }
@@ -478,6 +480,7 @@ public abstract class Dispatcher extends PermanentlyFencedRpcEndpoint<Dispatcher
             throws Exception {
         final RpcService rpcService = getRpcService();
 
+        // 创建JobManagerRunner
         JobManagerRunner runner =
                 jobManagerRunnerFactory.createJobManagerRunner(
                         jobGraph,

@@ -33,6 +33,14 @@ import java.util.UUID;
  * by calling the method {@link #confirmLeadership(UUID, String)}. This will notify the leader
  * election service, that the contender has accepted the leadership specified and that the leader
  * session id as well as the leader address can now be published for leader retrieval services.
+ *
+ * <p>Leader选举是通过LeaderElectionService(选举服务)和LeaderContender(参与竞选的对象)共同来完成的，
+ * 每一次选举成功后都会有唯一的leaderSessionId，可以用来作为RpcGateway通信的fencing token.
+ *
+ * <p>当一个LeaderContender竞选成功了，会通过LeaderContender#grantLeadership得到通知.
+ *
+ * <p>LeaderElectionService有多种实现，如无需进行选举过程的StandaloneLeaderElectionService，以及默认实现
+ * DefaultLeaderElectionService, EmbeddedLeaderElectionService等.
  */
 public interface LeaderElectionService {
 

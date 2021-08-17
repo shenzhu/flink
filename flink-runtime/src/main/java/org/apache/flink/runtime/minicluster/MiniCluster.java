@@ -122,7 +122,15 @@ import java.util.stream.Collectors;
 import static org.apache.flink.util.Preconditions.checkNotNull;
 import static org.apache.flink.util.Preconditions.checkState;
 
-/** MiniCluster to execute Flink jobs locally. */
+/**
+ * MiniCluster to execute Flink jobs locally.
+ *
+ * <p>首先从MiniCluster入手，分析一下Flink的启动流程以及内部各组件之间的交互.
+ *
+ * <p>MiniCluster可以看作是一个内嵌的Flink运行时环境，所有的组件都在独立的本地线程中运行.
+ *
+ * <p>MiniCluster的启动入口在LocalStreamEnvironment中.
+ */
 public class MiniCluster implements AutoCloseableAsync {
 
     private static final Logger LOG = LoggerFactory.getLogger(MiniCluster.class);
@@ -265,6 +273,10 @@ public class MiniCluster implements AutoCloseableAsync {
      *     mini cluster.
      */
     public void start() throws Exception {
+        /**
+         * 启动流程大致分为三个阶段: (1) 创建一些辅助的服务，如RpcService, HighAvailabilityServices, BlobServer等 (2)
+         * 启动TaskManager (3) 启动Dispatcher, ResourceManager等
+         */
         synchronized (lock) {
             checkState(!running, "MiniCluster is already running");
 
@@ -351,6 +363,7 @@ public class MiniCluster implements AutoCloseableAsync {
                                 ConfigurationUtils.getSystemResourceMetricsProbingInterval(
                                         configuration));
 
+                // 创建HighAvailabilityServices
                 ioExecutor =
                         Executors.newFixedThreadPool(
                                 ClusterEntrypointUtils.getPoolSize(configuration),
@@ -369,12 +382,28 @@ public class MiniCluster implements AutoCloseableAsync {
                                 new InetSocketAddress(
                                         InetAddress.getLocalHost(), blobServer.getPort()));
 
+                /**
+                 * 启动TaskManager.
+                 *
+                 * <p>在创建HighAvailabilityServices之后，就可以启动TaskManager了，TaskManagerRunner#startTaskManager
+                 * 会创建一个TaskExecutor，它实现了RpcEndpoint接口.
+                 *
+                 * <p>TaskExecutor需要和ResourceManager等组件进行通信，可以通过HighAvailabilityServices获得对应的服务地址.
+                 */
                 startTaskManagers();
 
                 MetricQueryServiceRetriever metricQueryServiceRetriever =
                         new RpcMetricQueryServiceRetriever(
                                 metricRegistry.getMetricQueryServiceRpcService());
 
+                /**
+                 * 启动DispatcherResourceManagerComponent
+                 *
+                 * <p>在MiniCluster模式下，会使用DefaultDispatcherResourceManagerComponentFactory来创建
+                 * DispatcherResourceManagerComponent, 用来启动Dispatcher,
+                 * ResourceManager和WebMonitorEndpoint, 这些组件都在同一个进程中运行. MiniCluster模式下启动的是
+                 * StandaloneDispatcher和StandaloneResourceManager.
+                 */
                 setupDispatcherResourceManagerComponents(
                         configuration,
                         dispatcherResourceManagerComponentRpcServiceFactory,
@@ -500,6 +529,13 @@ public class MiniCluster implements AutoCloseableAsync {
             case WITH_LEADERSHIP_CONTROL:
                 return new EmbeddedHaServicesWithLeadershipControl(executor);
             case CONFIGURED:
+                /**
+                 * HighAvailabilityServicesUtils是创建HighAvailabilityServices的工具类，
+                 * 在没有配置HA的情况下，会创建EmbeddedHaServices, 它不具备高可用的特性，适用于 ResourceManager, TaskManager,
+                 * JobManager等所有组件都运行在同一个进程的情况.
+                 * EmbeddedHaService为各组件创建的选举服务为EmbeddedLeaderElectionService，一旦有
+                 * 参与选举的LeaderContender加入，该contender就被选择为leader.
+                 */
                 return HighAvailabilityServicesUtils.createAvailableOrEmbeddedServices(
                         configuration, executor);
             default:
@@ -840,12 +876,14 @@ public class MiniCluster implements AutoCloseableAsync {
     }
 
     public CompletableFuture<JobSubmissionResult> submitJob(JobGraph jobGraph) {
+        // 通过Dispatcher的gateway retriever获取DispatcherGateway
         final CompletableFuture<DispatcherGateway> dispatcherGatewayFuture =
                 getDispatcherGatewayFuture();
         final CompletableFuture<InetSocketAddress> blobServerAddressFuture =
                 createBlobServerAddress(dispatcherGatewayFuture);
         final CompletableFuture<Void> jarUploadFuture =
                 uploadAndSetJobFiles(blobServerAddressFuture, jobGraph);
+        // 通过RPC调用向Dispatcher提交JobGraph
         final CompletableFuture<Acknowledge> acknowledgeCompletableFuture =
                 jarUploadFuture
                         .thenCombine(

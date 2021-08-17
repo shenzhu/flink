@@ -31,6 +31,9 @@ import java.util.concurrent.atomic.AtomicReference;
 /**
  * Retrieves and stores the leading {@link RpcGateway}.
  *
+ * <p>GatewayRetriever接口用于获取RpcGateway，抽象类LeaderGatewayRetriever则同时继承了LeaderRetriever和
+ * GatewayRetriever，因而: (1) 可以在Leader选举完之后得到Leader地址 (2) 可以获取到Leader的RpcGateway.
+ *
  * @param <T> type of the gateway to retrieve
  */
 public abstract class LeaderGatewayRetriever<T extends RpcGateway> extends LeaderRetriever

@@ -27,6 +27,8 @@ package org.apache.flink.runtime.leaderretrieval;
  * once.
  *
  * <p>The service should be stopped by calling the stop method.
+ *
+ * <p>LeaderRetrievalService可以启动一个对Leader地址的监听，在Leader选举完成后得到通知.
  */
 public interface LeaderRetrievalService {
 

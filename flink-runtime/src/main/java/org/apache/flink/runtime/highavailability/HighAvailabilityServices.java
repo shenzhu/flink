@@ -42,6 +42,9 @@ import java.util.UUID;
  *   <li>Registry that marks a job's status
  *   <li>Naming of RPC endpoints
  * </ul>
+ *
+ * <p>提供了获取HA所有相关服务的方法，包括: (1) ResourceManager选举服务以及leader的获取 (2) JobManager选举服务以及leader的获取 (3)
+ * 任务状态的注册表 (4) Checkpoint recovery, blob store等相关的服务.
  */
 public interface HighAvailabilityServices extends ClientHighAvailabilityServices {
 
